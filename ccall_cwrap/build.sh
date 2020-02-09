@@ -1,0 +1,2 @@
+# emcc -o hello.html hello.c  -s WASM=1 -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall','cwrap']" --shell-file shell_minimal.html
+emcc -o hello.js hello.c  -s WASM=1 -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall','cwrap']" 

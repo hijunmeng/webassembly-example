@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Document</title>
+</head>
+<body>
+    <p>此示例演示了如何在c中调用js的三种方式</p>
+    <p>参考：https://wasm.zcopy.site/cppwasm/ch2-02-implement-c-api-in-js.html</p>
+    <p>请查看控制台</p>
+    <script>
+        function f1(){
+            var answer = 42;
+            function f2() {
+                console.log("answer="+answer);
+                return answer;
+            }
+            return f2;
+        }
+        
+        var jsShowMeTheAnswer = f1();//jsShowMeTheAnswer由f1动态实现
+       
+
+
+        Module = {};
+        Module.onRuntimeInitialized = function() {
+          Module._print_the_answer();//第一种方式，由单独js实现
+          Module._alert();//第二种方式，直接在c代码中调用js的api
+          Module._func();//第三种方式，由js动态实现,等于调到jsShowMeTheAnswer()
+        }
+        </script>
+    <script src="capi_js.js"></script>
+</body>
+</html>

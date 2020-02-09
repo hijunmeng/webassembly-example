@@ -1,0 +1,1 @@
+emcc capi_js.c --js-library pkg.js -o capi_js.js # --js-library pkg.js意为将pkg.js作为附加库参与链接

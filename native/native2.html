@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    请查看控制台
+    <script>
+        var Module = { 
+            onRuntimeInitialized: function() {//Emscripten的Runtime准备就绪才可以调用导出函数
+            console.log("result="+Module._main());//42
+            console.log("result="+Module._sum(1,2));//3
+            Module._alert();//会弹窗
+            } 
+        };
+    
+        
+    </script>
+    <script async src="native.js"></script>
+</body>
+</html>

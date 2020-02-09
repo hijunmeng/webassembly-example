@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Emscripten-Generated Code</title>
+    <style>
+      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+      textarea.emscripten { font-family: monospace; width: 80%; }
+      div.emscripten { text-align: center; }
+      div.emscripten_border { border: 1px solid black; }
+      /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+      canvas.emscripten { border: 0px none; background-color: black; }
+
+      .spinner {
+        height: 50px;
+        width: 50px;
+        margin: 0px auto;
+        -webkit-animation: rotation .8s linear infinite;
+        -moz-animation: rotation .8s linear infinite;
+        -o-animation: rotation .8s linear infinite;
+        animation: rotation 0.8s linear infinite;
+        border-left: 10px solid rgb(0,150,240);
+        border-right: 10px solid rgb(0,150,240);
+        border-bottom: 10px solid rgb(0,150,240);
+        border-top: 10px solid rgb(100,0,200);
+        border-radius: 100%;
+        background-color: rgb(200,100,250);
+      }
+      @-webkit-keyframes rotation {
+        from {-webkit-transform: rotate(0deg);}
+        to {-webkit-transform: rotate(360deg);}
+      }
+      @-moz-keyframes rotation {
+        from {-moz-transform: rotate(0deg);}
+        to {-moz-transform: rotate(360deg);}
+      }
+      @-o-keyframes rotation {
+        from {-o-transform: rotate(0deg);}
+        to {-o-transform: rotate(360deg);}
+      }
+      @keyframes rotation {
+        from {transform: rotate(0deg);}
+        to {transform: rotate(360deg);}
+      }
+
+    </style>
+  </head>
+  <body>
+    <hr/>
+    <figure style="overflow:visible;" id="spinner"><div class="spinner"></div><center style="margin-top:0.5em"><strong>emscripten</strong></center></figure>
+    <div class="emscripten" id="status">Downloading...</div>
+    <div class="emscripten">
+      <progress value="0" max="100" id="progress" hidden=1></progress>  
+    </div>
+    <div class="emscripten_border">
+      <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+    </div>
+    <hr/>
+    <div class="emscripten">
+      <input type="checkbox" id="resize">Resize canvas
+      <input type="checkbox" id="pointerLock" checked>Lock/hide mouse pointer
+      &nbsp;&nbsp;&nbsp;
+      <input type="button" value="Fullscreen" onclick="Module.requestFullscreen(document.getElementById('pointerLock').checked, 
+                                                                                document.getElementById('resize').checked)">
+    </div>
+    
+    <hr/>
+    <textarea class="emscripten" id="output" rows="8"></textarea>
+    <hr>
+    <button class="mybutton">运行我的函数</button>
+
+    <script type='text/javascript'>
+      var statusElement = document.getElementById('status');
+      var progressElement = document.getElementById('progress');
+      var spinnerElement = document.getElementById('spinner');
+
+      var Module = {
+        preRun: [],
+        postRun: [],
+        print: (function() {
+          var element = document.getElementById('output');
+          if (element) element.value = ''; // clear browser cache
+          return function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            // These replacements are necessary if you render to raw HTML
+            //text = text.replace(/&/g, "&amp;");
+            //text = text.replace(/</g, "&lt;");
+            //text = text.replace(/>/g, "&gt;");
+            //text = text.replace('\n', '<br>', 'g');
+            console.log(text);
+            if (element) {
+              element.value += text + "\n";
+              element.scrollTop = element.scrollHeight; // focus on bottom
+            }
+          };
+        })(),
+        printErr: function(text) {
+          if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+          console.error(text);
+        },
+        canvas: (function() {
+          var canvas = document.getElementById('canvas');
+
+          // As a default initial behavior, pop up an alert when webgl context is lost. To make your
+          // application robust, you may want to override this behavior before shipping!
+          // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
+          canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+
+          return canvas;
+        })(),
+        setStatus: function(text) {
+          if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+          if (text === Module.setStatus.last.text) return;
+          var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+          var now = Date.now();
+          if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+          Module.setStatus.last.time = now;
+          Module.setStatus.last.text = text;
+          if (m) {
+            text = m[1];
+            progressElement.value = parseInt(m[2])*100;
+            progressElement.max = parseInt(m[4])*100;
+            progressElement.hidden = false;
+            spinnerElement.hidden = false;
+          } else {
+            progressElement.value = null;
+            progressElement.max = null;
+            progressElement.hidden = true;
+            if (!text) spinnerElement.hidden = true;
+          }
+          statusElement.innerHTML = text;
+        },
+        totalDependencies: 0,
+        monitorRunDependencies: function(left) {
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+        }
+      };
+      Module.setStatus('Downloading...');
+      window.onerror = function() {
+        Module.setStatus('Exception thrown, see JavaScript console');
+        spinnerElement.style.display = 'none';
+        Module.setStatus = function(text) {
+          if (text) Module.printErr('[post-exception status] ' + text);
+        };
+      };
+
+      document.querySelector('.mybutton').addEventListener('click', function(){
+      alert('检查控制台');
+      let result;
+      console.log("=======================================================")
+      //JavaScript与C/C++相互调用的时候,传递的类型一切皆为Number,因此除了数字类型外，其他都要通过Number操作内存地址获得，非常不便，
+      //因此emscripten为我们封装了allocateUTF8和UTF8ToString等函数操作字符串等，更进一步为我们封装了ccall和cwrap
+      ptr = allocateUTF8("你好，Emscripten！");
+      let resultPtr=Module._returnString(123,ptr);
+      var str = UTF8ToString(resultPtr);
+      console.log("result="+str);
+      _free(ptr);//记得释放
+
+
+      console.log("=======================ccall=============================")
+       result = Module.ccall('returnString', // name of C function 
+                                'string', // return type 'boolean'、'number'、'string'、'null'
+                                ['number', 'string'], // argument types 'number'、'string'、'array'
+                                [123,"hello"]); // arguments
+      console.log("result="+result);//result=hello
+      result=Module._returnString(123,"hello")
+      console.log("result="+result);//result=0,无法得到字符串，这也就是和ccall的区别
+
+       result = Module.ccall('add', 'number', ['number', 'number'], [1, 2]);
+       console.log("result="+result);//3
+
+       result = Module._add(2, 3);
+       console.log("result="+result);//5
+
+       var str = 'Hello World';
+	    Module.ccall('printString', 'null', ['string'], [str]);//会打印出字符串:C:print_string(): Hello World
+      Module._printString(str)//不能打印字符串:C:print_string(): (null)，这也就是和ccall的区别
+
+      var count = 50;
+      var buf = new ArrayBuffer(count * 4);
+      var i8 = new Uint8Array(buf);
+      var i32 = new Int32Array(buf);
+      for (var i = 0; i < count; i++){
+        i32[i] = i + 1;
+      }
+      result = Module.ccall('sum', 'number', ['array', 'number'], [i8, count]);
+      console.log("result="+result);//1275,从1加到50等于1275
+      result = Module._sum(i8,count)
+      console.log("result="+result);//1668509029，结果是错的，这也说明了和ccall的区别
+    
+    //结果如下：
+    // 我的函数已被调用:123,hello
+    // result=hello
+    // 我的函数已被调用:123,(null)
+    // result=0
+    // result=3
+    // result=5
+    // C:print_string(): Hello World
+    // C:print_string(): (null)
+    // result=1275
+    // result=1668509029
+    
+    
+    console.log("=======================cwrap=============================")
+
+    var c_returnString = Module.cwrap('returnString', 'string', ['number', 'string']);
+    var c_add = Module.cwrap('add', 'number', ['number', 'number']);
+    var c_printString = Module.cwrap('printString', 'null', ['string']);
+    var c_sum = Module.cwrap('sum', 'number', ['array', 'number']);
+
+    console.log("result="+c_returnString(123,"hello"))
+    console.log("result="+c_add(123,7))
+    console.log("result="+c_printString("Hello World"))
+    console.log("result="+c_sum(i8,count))
+
+    //结果如下：
+    //我的函数已被调用:123,hello
+    // result=hello
+    // result=130
+    // C:print_string(): Hello World
+    // result=undefined
+    // result=1275
+
+
+    
+    
+    });
+    </script>
+    <script async type="text/javascript" src="hello.js"></script>
+  </body>
+</html>
+
+
